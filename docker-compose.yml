@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  tson-benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the results directory to a directory on the host
+      - ./benchmark_results:/results
+    # Ensure container stops after benchmark is complete
+    stop_signal: SIGINT
+    # CPU sınırı: 0.5 = yarım CPU çekirdeği
+    # (1.0 = tam bir CPU çekirdeği anlamına gelir)
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"

@@ -1,5 +1,3 @@
-#![feature(portable_simd)]
-
 mod converter;
 mod parser;
 mod parser_new;

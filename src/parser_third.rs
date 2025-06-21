@@ -187,30 +187,27 @@ impl<'a> Parse for Parser<'a> {
     }
 
     fn de_array(&mut self) -> Res<TsonValue> {
-        let mut array = Vec::new();
         self.skip_whitespace();
-        while let Some(c) = self.peek() {
-            match c {
-                BRACKET_CLOSE => {
-                    self.index += 1;
-                    break;
-                }
-                _ => {
-                    let result = tri!(self.de_value_name_optional());
+        let mut array = Vec::new();
+        while peek_not_bracket_close(self.peek()) {
+            let result = self.de_value_name_optional()?;
 
-                    match result {
-                        ValueNameOptional::Named(name, value) => {
-                            let mut item_map = Map::new();
-                            item_map.insert(name, value);
-                            array.push(TsonValue::Object(item_map));
-                        }
-                        ValueNameOptional::Unnamed(value) => {
-                            array.push(value);
-                        }
-                    }
-                    self.skip_whitespace();
+            match result {
+                ValueNameOptional::Named(name, value) => {
+                    let mut item_map = Map::new();
+                    item_map.insert(name, value);
+                    array.push(TsonValue::Object(item_map));
+                }
+                ValueNameOptional::Unnamed(value) => {
+                    array.push(value);
                 }
             }
+
+            self.skip_whitespace();
+        }
+
+        if tri!(some_or_error!(self.next())) != BRACKET_CLOSE {
+            return Err("Expected ']'".to_string());
         }
 
         Ok(TsonValue::Array(array))
@@ -219,18 +216,14 @@ impl<'a> Parse for Parser<'a> {
     fn de_object(&mut self) -> Res<TsonValue> {
         let mut map = Map::new();
         self.skip_whitespace();
-        while let Some(c) = self.peek() {
-            match c {
-                BRACE_CLOSE => {
-                    self.index += 1;
-                    break;
-                }
-                _ => {
-                    let result = tri!(self.de_value_name_required());
-                    map.insert(result.0, result.1);
-                    self.skip_whitespace();
-                }
-            }
+        while peek_not_brace_close(self.peek()) {
+            let (name, value) = self.de_value_name_required()?;
+            map.insert(name, value);
+            self.skip_whitespace();
+        }
+
+        if tri!(some_or_error!(self.next())) != BRACE_CLOSE {
+            return Err("Expected '}'".to_string());
         }
 
         Ok(TsonValue::Object(map))
@@ -281,8 +274,13 @@ impl<'a> Parse for Parser<'a> {
 
         let mut result: i64 = 0;
         match first {
-            Some(MINUS) => sign = -1,
-            Some(PLUS) => (),
+            Some(MINUS) => {
+                sign = -1;
+                self.next();
+            }
+            Some(PLUS) => {
+                self.next();
+            }
             None => return Ok(TsonValue::Int(0)),
             _ => (),
         }
@@ -395,4 +393,20 @@ fn is_int_digit(c: u8) -> Option<u8> {
 
 fn is_not_field_terminator(c: u8) -> bool {
     !is_field_terminator(c)
+}
+
+fn peek_not_bracket_close(c: Option<u8>) -> bool {
+    if let Some(c) = c {
+        if c != BRACKET_CLOSE { true } else { false }
+    } else {
+        false
+    }
+}
+
+fn peek_not_brace_close(c: Option<u8>) -> bool {
+    if let Some(c) = c {
+        if c != BRACE_CLOSE { true } else { false }
+    } else {
+        false
+    }
 }

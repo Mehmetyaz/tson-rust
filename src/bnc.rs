@@ -11,19 +11,7 @@ pub fn run_simple_benchmark() {
 
     // Sample data for benchmarking
     let start_data_creation = Instant::now();
-    let json_data = json!({
-        "string": "Hello, World!",
-        "number": 42,
-        "float": std::f64::consts::PI,
-        "boolean": true,
-        "null": null,
-        "array": [1, "string", true, null, 3.14],
-        "object": {
-            "a": 1,
-            "b": "string",
-            "c": true
-        }
-    });
+    let json_data = json!([1, 2, 3, 4, 5, 6, 7,]);
     let data_creation_time = start_data_creation.elapsed();
     println!("Data creation time: {:?}", data_creation_time);
 

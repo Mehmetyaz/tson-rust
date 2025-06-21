@@ -1,8 +1,0 @@
-[build]
-rustflags = ["-D", "warnings"]
-
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))']
-runner = "wasm-bindgen-test-runner"
-
-[alias]
-fmt = "fmt -- --check" 
